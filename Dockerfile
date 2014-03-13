@@ -2,6 +2,8 @@
 
 FROM ubuntu
 
+RUN apt-get update
+
 # install Ruby 2.1.0
 RUN apt-get -y install build-essential zlib1g-dev libreadline-dev libssl-dev libcurl4-openssl-dev
 RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
