@@ -1,26 +1,47 @@
+# docker image for running CC test suite
+
 FROM ubuntu
-MAINTAINER Sam McTaggart
 
 RUN apt-get -y install wget
 RUN apt-get -y install git
 
-RUN wget -O chruby-0.3.8.tar.gz https://github.com/postmodern/chruby/archive/v0.3.8.tar.gz
-RUN tar -xzvf chruby-0.3.8.tar.gz
-RUN cd chruby-0.3.8/
-RUN sudo make install
-RUN echo "source /usr/local/share/chruby/chruby.sh" >> ~/.bashrc
-RUN echo "source /usr/local/share/chruby/auto.sh" >> ~/.bashrc
+# install Ruby 2.1.0
+RUN apt-get -y install build-essential zlib1g-dev libreadline-dev libssl-dev libcurl4-openssl-dev
+RUN git clone https://github.com/sstephenson/rbenv.git ~/.rbenv
+RUN git clone https://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
+RUN echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bash_profile
+RUN echo 'eval "$(rbenv init -)"' >> ~/.bash_profile
+ENV PATH /.rbenv/bin:/.rbenv/shims:$PATH
+RUN echo PATH=$PATH
+RUN rbenv init -
+RUN rbenv install 2.1.0 && rbenv global 2.1.0
 
-RUN wget -O ruby-install-0.4.1.tar.gz https://github.com/postmodern/ruby-install/archive/v0.4.1.tar.gz
-RUN tar -xzvf ruby-install-0.4.1.tar.gz
-RUN ruby-install-0.4.1/
-RUN sudo make install
-RUN ruby-install ruby
-
+# never install a ruby gem docs
 RUN echo "gem: --no-rdoc --no-ri" >> ~/.gemrc
 
-RUN source ~/.bashrc
+# Install bundler and the "bundle" shim
+RUN gem install bundler && rbenv rehash
 
-RUN gem install bundler
+# Checkout the cloud_controller_ng code
+RUN git clone -b master git://github.com/cloudfoundry/cloud_controller_ng.git /cloud_controller_ng
 
-RUN gem install rspec
+# mysql gem requires these
+RUN apt-get -y install libmysqld-dev libmysqlclient-dev mysql-client
+# pg gem requires this
+RUN apt-get -y install libpq-dev
+# sqlite gem requires this
+RUN apt-get -y install libsqlite3-dev
+
+# Optimization: Pre-run bundle install.
+# It may be that some gems are installed that never get cleaned up,
+# but this will make the subsequent CMD runs faster
+RUN cd /cloud_controller_ng && bundle install
+
+# Command to run at "docker run ..."
+CMD if [ -z $BRANCH ]; then BRANCH=master; fi; \
+    cd /cloud_controller_ng \
+    && git checkout $BRANCH \
+    && git pull \
+    && git submodule init && git submodule update \
+    && bundle install \
+    && bundle exec rspec spec
