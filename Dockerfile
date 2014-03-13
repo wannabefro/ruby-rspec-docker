@@ -24,4 +24,4 @@ RUN echo "gem: --no-rdoc --no-ri" >> ~/.gemrc
 # Install bundler and the "bundle" shim
 RUN gem install bundler && rbenv rehash
 
-RUN gem install rspec
+RUN gem install rspec && rbenv rehash
