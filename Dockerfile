@@ -22,26 +22,4 @@ RUN echo "gem: --no-rdoc --no-ri" >> ~/.gemrc
 # Install bundler and the "bundle" shim
 RUN gem install bundler && rbenv rehash
 
-# Checkout the cloud_controller_ng code
-RUN git clone -b master git://github.com/cloudfoundry/cloud_controller_ng.git /cloud_controller_ng
-
-# mysql gem requires these
-RUN apt-get -y install libmysqld-dev libmysqlclient-dev mysql-client
-# pg gem requires this
-RUN apt-get -y install libpq-dev
-# sqlite gem requires this
-RUN apt-get -y install libsqlite3-dev
-
-# Optimization: Pre-run bundle install.
-# It may be that some gems are installed that never get cleaned up,
-# but this will make the subsequent CMD runs faster
-RUN cd /cloud_controller_ng && bundle install
-
-# Command to run at "docker run ..."
-CMD if [ -z $BRANCH ]; then BRANCH=master; fi; \
-    cd /cloud_controller_ng \
-    && git checkout $BRANCH \
-    && git pull \
-    && git submodule init && git submodule update \
-    && bundle install \
-    && bundle exec rspec spec
+RUN gem install rspec
