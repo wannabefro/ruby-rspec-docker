@@ -3,6 +3,7 @@
 FROM ubuntu
 
 RUN apt-get update
+RUN apt-get -y install git
 
 # install Ruby 2.1.0
 RUN apt-get -y install build-essential zlib1g-dev libreadline-dev libssl-dev libcurl4-openssl-dev
