@@ -1,8 +1,10 @@
 # docker image for Ruby and Rspec
+# Based off http://www.activestate.com/blog/2014/01/using-docker-run-ruby-rspec-ci-jenkins
 
 FROM ubuntu
 
 RUN apt-get update
+RUN apt-get -y install wget
 RUN apt-get -y install git
 
 # install Ruby 2.1.0
